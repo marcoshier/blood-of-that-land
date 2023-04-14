@@ -10,7 +10,7 @@ val applicationMainClass = "TemplateProgramKt"
 
 /**  ## additional ORX features to be added to this project */
 val orxFeatures = setOf<String>(
-//  "orx-boofcv",
+    "orx-boofcv",
     "orx-camera",
 //  "orx-chataigne",
     "orx-color",
@@ -22,14 +22,16 @@ val orxFeatures = setOf<String>(
 //  "orx-glslify",
 //  "orx-gradient-descent",
 //    "orx-git-archiver",
+    "orx-keyframer",
     "orx-gui",
     "orx-image-fit",
 //  "orx-integral-image",
 //  "orx-interval-tree",
 //  "orx-jumpflood",
-//  "orx-kdtree",
+    "orx-kdtree",
 //  "orx-keyframer",      
 //  "orx-kinect-v1",
+    "orx-marching-squares",
 //  "orx-kotlin-parser",
 //  "orx-mesh-generators",
 //  "orx-midi",
@@ -53,7 +55,7 @@ val orxFeatures = setOf<String>(
 //  "orx-temporal-blur",
 //  "orx-tensorflow",    
 //  "orx-time-operators",
-//  "orx-timer",
+    "orx-timer",
 //  "orx-triangulation",
     "orx-video-profiles",
     "orx-view-box",
@@ -101,8 +103,8 @@ repositories {
 dependencies {
 
 //    implementation(libs.jsoup)
-//    implementation(libs.gson)
-//    implementation(libs.csv)
+    implementation(libs.gson)
+    implementation(libs.csv)
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)

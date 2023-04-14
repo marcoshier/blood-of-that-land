@@ -6,6 +6,7 @@ import org.openrndr.extra.noise.scatter
 import org.openrndr.extra.noise.uniform
 import org.openrndr.extra.olive.oliveProgram
 import org.openrndr.math.Vector2
+import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
 
 /**
@@ -22,22 +23,23 @@ fun main() = application {
     }
     oliveProgram {
 
-        val list = drawer.bounds.scatter(20.0)
-        val circles =
+        val positions = drawer.bounds.scatter(20.0)
+        val circles = positions.map {
+            Circle(it, 45.0).contour
+        }
+
         extend {
-
-            Random.resetState()
             drawer.clear(ColorRGBa.PINK)
+            drawer.fill = null
+            Random.resetState()
 
-            drawer.rectangles {
-                for (pear in list) {
-                    val h = Double.uniform(0.0, 360.0, Random.rnd)
-                    val hsla = ColorHSLa(h, 0.5, 0.5)
 
-                    this.fill = hsla.toRGBa()
-                    val r = Rectangle.fromCenter(pear, 25.0, 25.0)
-                    this.rectangle(r)
-                }
+            for(johnny in circles) {
+                val y = Double.uniform(0.0, 1.0, Random.rnd)
+                val t = y * seconds
+                val c = johnny.sub(t, t + 0.2)
+
+                drawer.contour(c)
             }
 
 

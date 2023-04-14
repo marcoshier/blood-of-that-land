@@ -5,6 +5,10 @@ import org.openrndr.draw.loadImage
 import org.openrndr.draw.tint
 import kotlin.math.cos
 import kotlin.math.sin
+import org.openrndr.animatable.Animatable
+import org.openrndr.math.Vector2
+import org.openrndr.math.map
+
 
 fun main() = application {
     configure {
@@ -13,6 +17,7 @@ fun main() = application {
     }
 
     program {
+
         val image = loadImage("data/images/pm5544.png")
         val font = loadFont("data/fonts/default.otf", 64.0)
 
