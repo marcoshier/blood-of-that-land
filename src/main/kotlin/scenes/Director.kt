@@ -1,5 +1,6 @@
 package scenes
 
+import blob_tracker.Plate
 import blob_tracker.loadDropletsVideo
 import blob_tracker.loadDropletsWebcam
 import org.openrndr.animatable.Animatable
@@ -10,7 +11,7 @@ import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.shape.ShapeContour
 import tools.computeContours
 
-val range = 10.0..100.0
+val range = 10.0..250.0
 
 fun main() = application {
     configure {
@@ -31,23 +32,10 @@ fun main() = application {
         val scene02 = viewBox(drawer.bounds).apply { scene02() }
         val update02: (contours: List<ShapeContour>) -> Unit by scene02.userProperties
 
-        var current = 0
+        val scene03 = viewBox(drawer.bounds).apply { scene03() }
+        val update03: (contours: List<ShapeContour>) -> Unit by scene03.userProperties
 
-        class Animator: Animatable() {
-            var sceneTimer = 0.0
 
-            fun scene() {
-                ::sceneTimer.animate(1.0, 10000).completed.listen {
-                    current = if(current == 2) 0 else current + 1
-                    sceneTimer = 0.0
-                    scene()
-                }
-            }
-
-            init {
-                //scene()
-            }
-        }
         val anim = Animator()
 
         extend {
@@ -55,7 +43,7 @@ fun main() = application {
             dry.update()
             contours = computeContours(dry.result).filter { it.bounds.width in range && it.bounds.height in range }
 
-            when(current) {
+            when(anim.current) {
                 0 -> {
                     update01(dry.result)
                     scene01.draw()
@@ -64,6 +52,10 @@ fun main() = application {
                     update02(contours)
                     scene02.draw()
                 }
+                2 -> {
+                    update03(contours)
+                    scene03.draw()
+                }
             }
 
 
@@ -71,7 +63,7 @@ fun main() = application {
                 drawer.fill = ColorRGBa.WHITE
                 drawer.stroke = null
                 drawer.rectangle(0.0, 0.0, width * anim.sceneTimer, 10.0)
-                drawer.text(current.toString(), 5.0, 20.0)
+                drawer.text(anim.current.toString(), 5.0, 20.0)
             }
         }
     }

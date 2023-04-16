@@ -11,9 +11,8 @@ import org.openrndr.math.IntVector2
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.ShapeContour
 import tools.computeContours
-import java.awt.GraphicsEnvironment
 
-fun Program.scene02() {
+fun Program.scene03() {
 
     var contours = listOf<ShapeContour>()
 
@@ -34,11 +33,15 @@ fun Program.scene02() {
         drawer.isolated {
             drawer.drawStyle.clip = left
             drawer.stroke = ColorRGBa.RED
-            drawer.contours(contours)
+
+            drawer.contour(ShapeContour.fromPoints(contours.map { it.bounds.center }, false))
+
+            drawer.fill = ColorRGBa.BLACK
+            drawer.contours(contours.map { it.close() })
         }
 
         drawer.translate(width / 2.0, 0.0)
-        drawer.isolated {
+        /*drawer.isolated {
             drawer.drawStyle.clip = right
             val scale = 3.0
             val w = right.width / scale
@@ -51,13 +54,11 @@ fun Program.scene02() {
             drawer.translate(-width / 2.0, -height / 2.0)
             drawer.fill = ColorRGBa.RED
             drawer.contours(contours.map { it.close() })
-        }
+        }*/
 
     }
 
 }
-
-val secondScreenConnected by lazy { GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices.size == 2 }
 fun main() = application {
     configure {
         width = 1280
@@ -75,7 +76,7 @@ fun main() = application {
             if(fromVideo) loadDropletsVideo(drawer.bounds, dry = false) else loadDropletsWebcam(drawer.bounds)
         }
 
-        val scene02 = viewBox(drawer.bounds).apply { scene02() }
+        val scene02 = viewBox(drawer.bounds).apply { scene03() }
         val update02: (contours: List<ShapeContour>) -> Unit by scene02.userProperties
 
         extend {
