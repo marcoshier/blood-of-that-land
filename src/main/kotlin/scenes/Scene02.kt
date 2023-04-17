@@ -1,7 +1,8 @@
 package scenes
 
-import blob_tracker.loadDropletsVideo
-import blob_tracker.loadDropletsWebcam
+import blob_tracker.Droplet
+import blob_tracker.contours
+import blob_tracker.loadVideoSource
 import org.openrndr.Program
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
@@ -15,21 +16,24 @@ import java.awt.GraphicsEnvironment
 
 fun Program.scene02() {
 
-    var contours = listOf<ShapeContour>()
+    var droplets = mutableMapOf<Int, Droplet>()
 
     val left = Rectangle(0.0, 0.0, width / 2.0, height * 1.0)
     val right = Rectangle(width / 2.0, 0.0, width / 2.0, height * 1.0)
 
-    var update02: (contours: List<ShapeContour>)->Unit by this.userProperties
-    update02 = {
-        contours = it
+    var update02: (droplets: MutableMap<Int, Droplet>)->Unit by this.userProperties
+    update02 = { dpls ->
+        droplets = dpls
     }
 
-    val anim = ZoomedAnimation(drawer.bounds, contours)
+    val anim = ZoomedAnimation(drawer.bounds)
 
 
     extend {
         anim.updateAnimation()
+        val contours = droplets.contours
+
+        anim.contours = contours
 
         drawer.isolated {
             drawer.drawStyle.clip = left
@@ -50,7 +54,7 @@ fun Program.scene02() {
             drawer.scale(scale)
             drawer.translate(-width / 2.0, -height / 2.0)
             drawer.fill = ColorRGBa.RED
-            drawer.contours(contours.map { it.close() })
+            drawer.contours(contours)
         }
 
     }
@@ -72,7 +76,7 @@ fun main() = application {
 
         val fromVideo = true
         val dry = viewBox(drawer.bounds).apply {
-            if(fromVideo) loadDropletsVideo(drawer.bounds, dry = false) else loadDropletsWebcam(drawer.bounds)
+            if(fromVideo) loadVideoSource(drawer.bounds, dry = false, fromWebcam)
         }
 
         val scene02 = viewBox(drawer.bounds).apply { scene02() }

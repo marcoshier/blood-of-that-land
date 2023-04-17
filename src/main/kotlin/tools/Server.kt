@@ -16,6 +16,20 @@ import java.net.http.HttpResponse
 
 val wordList by lazy { csvReader().readAll(File("offline-data/labels-only.csv")).map { it[1].split(",")[0] } }
 
+class ImageServer() {
+    val path = "offline-data/Archive_images"
+    val files = File(path).walk().filter { it.isFile }.map { it.absolutePath }.toMutableList()
+
+    val inUse = files
+
+    fun grabFile(): String {
+        val r = files.random()
+        inUse.remove(r)
+        return r
+    }
+}
+
+
 class Server() {
 
     val respReceived = Event<String>()

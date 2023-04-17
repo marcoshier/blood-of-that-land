@@ -5,20 +5,24 @@ import org.openrndr.boofcv.binding.toGrayF32
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 import org.openrndr.events.Event
+import org.openrndr.extra.shapes.bounds.bounds
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.ShapeContour
+import org.openrndr.shape.bounds
 import org.openrndr.shape.contains
+import org.w3c.dom.css.Rect
+import scenes.debug
 import scenes.range
-import tools.KLT
-import tools.Loader
-import tools.computeContours
-import tools.wordList
+import tools.*
 
 class DropletAddedEvent(val index: Int, val label: String, val c: ColorRGBa)
 class Plate(val frame: Rectangle): Animatable() {
 
     val tracker = KLT()
+    val server = ImageServer()
+
+
     val droplets = mutableMapOf<Int, Droplet>()
 
     val dropletAdded = Event<DropletAddedEvent>()
@@ -35,6 +39,7 @@ class Plate(val frame: Rectangle): Animatable() {
 
     var contours = listOf<ShapeContour>()
         set(value) {
+
             field = value
             // prune()
             tracker.process(image.toGrayF32())
@@ -91,6 +96,7 @@ class Plate(val frame: Rectangle): Animatable() {
 
     private fun putDroplet(index: Int, pts: Set<TrackPoint>, c: ShapeContour) {
         val d = Droplet().apply {
+            file = server.grabFile()
             label = wordList.random()
             points = pts
             contour = c
@@ -101,7 +107,8 @@ class Plate(val frame: Rectangle): Animatable() {
 
     var timer = 0.0
     private fun prune() {
-        if(!hasAnimations()) {
+        droplets.values.removeAll(droplets.filter { !it.value.isTracked }.values.toSet())
+        /*if(!hasAnimations()) {
             timer = 0.0
             cancel()
             ::timer.animate(1.0, 2000).completed.listen {
@@ -112,10 +119,11 @@ class Plate(val frame: Rectangle): Animatable() {
 
                 droplets.values.removeAll(outliers.values)
             }
-        }
+        }*/
     }
 
     fun update(cb: ColorBuffer) {
+        updateAnimation()
         image = cb
     }
 
@@ -134,10 +142,28 @@ class Plate(val frame: Rectangle): Animatable() {
             drawer.contours(contours)
         }
 
-        droplets.values.forEach { it.draw(drawer) }
+        if(debug) {
+            drawer.fill = ColorRGBa.BLUE.opacify(0.4)
+            drawer.contours(droplets.contours)
+        }
+
+        droplets.values.forEach { if(it.isTracked) it.draw(drawer) }
 
 
         drawer.fill = ColorRGBa.WHITE
         drawer.rectangle(0.0, 0.0, frame.width * timer, 5.0)
     }
 }
+
+fun Rectangle.contains(other: Rectangle): Boolean {
+    val above = y < other.y
+    val below = y + height > other.y + other.height
+    val rightOf = x + width > other.x + other.width
+    val leftOf = x < other.x
+    return (above && below && leftOf && rightOf)
+}
+
+val MutableMap<Int, Droplet>.contours : List<ShapeContour>
+    get() = map {
+        it.value.contour
+    }

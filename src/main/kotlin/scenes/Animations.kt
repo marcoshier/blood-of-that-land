@@ -5,8 +5,9 @@ import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.ShapeContour
 
-class ZoomedAnimation(val bounds: Rectangle, val contours: List<ShapeContour>): Animatable() {
+class ZoomedAnimation(val bounds: Rectangle): Animatable() {
     var timerRight = 0.0
+    var contours: List<ShapeContour> = listOf()
     var currentCenter: Vector2? = bounds.center
         set(value) {
             field = value ?: bounds.center

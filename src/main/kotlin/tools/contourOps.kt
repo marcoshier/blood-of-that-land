@@ -22,5 +22,5 @@ fun computeContours(image: ColorBuffer): List<ShapeContour> {
     var filtered = BinaryImageOps.erode8(binary, 1, null)
     filtered = BinaryImageOps.dilate8(filtered, 1, null)
 
-    return BinaryImageOps.contour(filtered, ConnectRule.EIGHT, null).toShapeContours()
+    return BinaryImageOps.contour(filtered, ConnectRule.EIGHT, null).toShapeContours(external = false, closed = true)
 }

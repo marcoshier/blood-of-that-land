@@ -1,7 +1,6 @@
 package screens
 
 import blob_tracker.*
-import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.openrndr.Program
 import org.openrndr.animatable.Animatable
 import org.openrndr.animatable.easing.Easing
@@ -11,13 +10,13 @@ import org.openrndr.color.rgb
 import org.openrndr.draw.*
 import org.openrndr.extra.fx.Post
 import org.openrndr.extra.fx.color.ColorCorrection
-import org.openrndr.extra.fx.color.Duotone
 import org.openrndr.extra.fx.color.LumaMap
 import org.openrndr.extra.noise.uniform
 import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
 import org.openrndr.writer
+import scenes.fromWebcam
 import tools.ColorMoreThan
 import kotlin.random.Random
 
@@ -45,7 +44,7 @@ fun Program.interface01(fromVideo: Boolean = true) {
         val sourceFrame = drawer.bounds
 
         val dry = viewBox(sourceFrame).apply {
-            if(fromVideo) loadDropletsVideo(sourceFrame, dry = false) else loadDropletsWebcam(sourceFrame)
+            if(fromVideo) loadVideoSource(sourceFrame, dry = false, fromWebcam)
         }
 
         val source = viewBox(sourceFrame) {
