@@ -3,7 +3,6 @@ package blob_tracker
 import org.openrndr.Program
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
-import org.openrndr.color.rgb
 import org.openrndr.draw.colorBuffer
 import org.openrndr.draw.shadeStyle
 import org.openrndr.extra.fx.Post
@@ -13,8 +12,10 @@ import org.openrndr.extra.gui.addTo
 import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.ffmpeg.PlayMode
 import org.openrndr.ffmpeg.VideoPlayerFFMPEG
+import org.openrndr.ffmpeg.loadVideoDevice
 import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
+import scenes.fromWebcam
 import tools.ColorMoreThan
 
 fun main() = application {
@@ -28,9 +29,9 @@ fun main() = application {
         val gui = GUI()
 
         val sourceFrame = Rectangle(0.0, 0.0, 960.0, 540.0)
-        val dry = viewBox(sourceFrame).apply { loadVideoSource(sourceFrame, dry = false) }
+        val dry = viewBox(sourceFrame).apply { loadVideoSource(sourceFrame, fromWebcam) }
 
-        val source = viewBox(sourceFrame) {
+        val wet = viewBox(sourceFrame) {
             extend(Post()) {
                 val threshold = ColorMoreThan().addTo(gui)
                 val colorcorr = ColorCorrection().addTo(gui)
@@ -61,13 +62,13 @@ fun main() = application {
             }
         }
 
-        val target = viewBox(sourceFrame) {
-            val space = Plate(source.result.bounds)
+        val final = viewBox(sourceFrame) {
+            val space = Plate(wet.result.bounds)
             space.dropletAdded.listen {
                 println("added")
             }
             extend {
-                space.update(source.result)
+                space.update(wet.result)
                 space.draw(drawer)
             }
         }
@@ -79,19 +80,22 @@ fun main() = application {
             dragged.listeners.reverse()
         }
         extend {
+
+            dry.update()
+
             drawer.translate(200.0, 0.0)
             dry.draw()
             drawer.translate(960.0, 0.0)
-            source.draw()
+            wet.draw()
             drawer.defaults()
             drawer.translate(200.0, 540.0)
-            target.draw()
+            final.draw()
 
         }
     }
 }
 
-fun Program.loadVideoSource(sourceFrame: Rectangle, dry: Boolean = false, webcam: Boolean = false) {
+fun Program.loadVideoSource(sourceFrame: Rectangle, webcam: Boolean = false) {
     val cb = colorBuffer(this.width, this.height)
     val video = if(webcam) loadWebcam() else loadDefaultVideo()
 
@@ -102,26 +106,6 @@ fun Program.loadVideoSource(sourceFrame: Rectangle, dry: Boolean = false, webcam
         )
     }
 
-    if(!dry) {
-        extend(Post()) {
-            val threshold = ColorMoreThan().apply {
-                background = ColorRGBa.BLACK
-                foreground = rgb(0.0921, 0.6333, 0.0)
-            }
-            val colorcorr = ColorCorrection().apply {
-                brightness = 0.18
-                contrast = 1.0
-                saturation = 1.0
-                hueShift = -112.91
-                gamma = 0.776
-            }
-            post { input, output ->
-                val int = intermediate[0]
-                colorcorr.apply(input, int)
-                threshold.apply(int, output)
-            }
-        }
-    }
     extend {
         drawer.clear(ColorRGBa.WHITE)
         video.draw(drawer, blind = true)
@@ -158,7 +142,7 @@ fun loadDefaultVideo(): VideoPlayerFFMPEG {
 
 fun loadWebcam(): VideoPlayerFFMPEG {
     val devices = VideoPlayerFFMPEG.listDeviceNames()
-    return VideoPlayerFFMPEG.fromDevice(devices[0], PlayMode.VIDEO).apply {
+    return loadVideoDevice(devices[0], PlayMode.VIDEO).apply {
         play()
     }
 }

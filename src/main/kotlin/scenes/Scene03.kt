@@ -32,7 +32,7 @@ fun Program.scene03() {
         anim.updateAnimation()
         val contours = droplets.contours
 
-        anim.contours = contours
+        anim.rects = droplets.values.filter { it.isTracked  }.map { it.bounds }
 
         drawer.isolated {
             drawer.drawStyle.clip = left
@@ -77,7 +77,7 @@ fun main() = application {
 
         val fromVideo = true
         val dry = viewBox(drawer.bounds).apply {
-            if(fromVideo) loadVideoSource(drawer.bounds, dry = false, fromWebcam)
+            if(fromVideo) loadVideoSource(drawer.bounds, fromWebcam)
         }
 
         val scene02 = viewBox(drawer.bounds).apply { scene03() }

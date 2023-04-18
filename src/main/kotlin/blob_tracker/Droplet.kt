@@ -65,26 +65,38 @@ class Droplet {
     }
 
     val c = ColorRGBa.RED
+
     fun draw(drawer: Drawer, scene: Int = 0) {
         timeAlive = System.currentTimeMillis() - start
 
         if(timeAlive > 4000L && !imageLoaded) {
             println(file)
             cb = loadImage(file)
+            //getLabel()
             imageLoaded = true
         }
 
         if(timeAlive > 5000L && points.isNotEmpty()) {
-            checkStatic()
+           // checkStatic()
 
-            drawer.strokeWeight = 1.0
+
             when(scene) {
                 0 -> {
-                    drawer.stroke = null
-                    drawer.fill = ColorRGBa.WHITE
 
-                    drawer.shadeStyle = shadeStyle {
-                        fragmentTransform = """
+                }
+                1 -> {
+                    drawer.stroke = ColorRGBa.RED
+                    drawer.fill = null
+                    drawer.rectangle(bounds)
+                }
+            }
+
+
+            drawer.stroke = null
+            drawer.fill = ColorRGBa.WHITE
+
+            drawer.shadeStyle = shadeStyle {
+                fragmentTransform = """
                         vec2 texCoord = c_boundsPosition.xy;
                         texCoord.y = 1.0 - texCoord.y;
                         vec2 size = textureSize(p_image, 0);
@@ -92,14 +104,11 @@ class Droplet {
                         texCoord.x += 0.18;
                         x_fill = texture(p_image, texCoord);
                     """
-                        parameter("image", cb)
-                    }
-
-                    drawer.shape(contour.shape)
-                    drawer.shadeStyle = null
-                }
+                parameter("image", cb)
             }
 
+            drawer.shape(contour.shape)
+            drawer.shadeStyle = null
 
             if(debug) {
                 drawer.text(label, bounds.corner + Vector2(10.0, 14.0))

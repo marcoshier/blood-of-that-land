@@ -44,7 +44,7 @@ fun Program.interface01(fromVideo: Boolean = true) {
         val sourceFrame = drawer.bounds
 
         val dry = viewBox(sourceFrame).apply {
-            if(fromVideo) loadVideoSource(sourceFrame, dry = false, fromWebcam)
+            if(fromVideo) loadVideoSource(sourceFrame, fromWebcam)
         }
 
         val source = viewBox(sourceFrame) {
@@ -118,7 +118,7 @@ fun Program.interface01(fromVideo: Boolean = true) {
         var lastDroplet = DropletAddedEvent(0, "", ColorRGBa.TRANSPARENT)
         space.dropletAdded.listen {
                 seed++
-                labelsSoFar.add(it.label)
+                labelsSoFar.add(it.path)
                 anim.flash()
                 lastDroplet = it
         }

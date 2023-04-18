@@ -16,7 +16,7 @@ import scenes.debug
 import scenes.range
 import tools.*
 
-class DropletAddedEvent(val index: Int, val label: String, val c: ColorRGBa)
+class DropletAddedEvent(val index: Int, val path: String, val c: ColorRGBa)
 class Plate(val frame: Rectangle): Animatable() {
 
     val tracker = KLT()
@@ -97,12 +97,11 @@ class Plate(val frame: Rectangle): Animatable() {
     private fun putDroplet(index: Int, pts: Set<TrackPoint>, c: ShapeContour) {
         val d = Droplet().apply {
             file = server.grabFile()
-            label = wordList.random()
             points = pts
             contour = c
         }
         droplets[index] = d
-        dropletAdded.trigger(DropletAddedEvent(index, d.label,  d.c))
+        dropletAdded.trigger(DropletAddedEvent(index, d.file, d.c))
     }
 
     var timer = 0.0

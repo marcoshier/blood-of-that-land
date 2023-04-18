@@ -17,14 +17,38 @@ import java.net.http.HttpResponse
 val wordList by lazy { csvReader().readAll(File("offline-data/labels-only.csv")).map { it[1].split(",")[0] } }
 
 class ImageServer() {
+
     val path = "offline-data/Archive_images"
     val files = File(path).walk().filter { it.isFile }.map { it.absolutePath }.toMutableList()
+    val labels = mutableListOf<String>()
 
     val inUse = files
 
+
+    suspend fun getLabels(paths: List<String>): String {
+
+        val json = JsonObject()
+        val array = JsonArray().also { for(path in paths) { it.add(path) } }
+        json.add("Sequences", array)
+
+
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(address))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
+            .build()
+
+        val client = HttpClient.newHttpClient()
+
+        val resp = withContext(Dispatchers.IO) {
+            client.send(request, HttpResponse.BodyHandlers.ofString())
+        }
+        return resp.body()
+    }
+
+
     fun grabFile(): String {
         val r = files.random()
-        inUse.remove(r)
         return r
     }
 }

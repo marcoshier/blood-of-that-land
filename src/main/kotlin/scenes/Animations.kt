@@ -7,15 +7,18 @@ import org.openrndr.shape.ShapeContour
 
 class ZoomedAnimation(val bounds: Rectangle): Animatable() {
     var timerRight = 0.0
-    var contours: List<ShapeContour> = listOf()
-    var currentCenter: Vector2? = bounds.center
+    var rects: List<Rectangle> = listOf()
+    var currentCenter: Vector2? = Vector2.ZERO
         set(value) {
-            field = value ?: bounds.center
+            field = value ?: Vector2.ZERO
         }
 
     fun tick() {
-        ::timerRight.animate(1.0, 2000).completed.listen {
-            currentCenter = contours.shuffled().map { it.bounds }.firstOrNull { it.width in range }?.center
+        ::timerRight.animate(1.0, 5000).completed.listen {
+            if(rects.isNotEmpty()) {
+                currentCenter = rects.random().center
+                println(currentCenter)
+            }
             tick()
         }
     }
