@@ -20,7 +20,7 @@ import tools.ColorMoreThan
 
 val range = 10.0..250.0
 val fromWebcam = false
-val debug = true
+val debug = false
 
 fun main() = application {
     configure {
@@ -41,25 +41,27 @@ fun main() = application {
         val scene02 = viewBox(drawer.bounds).apply { scene02() }
         val updateSecond: (droplets: MutableMap<Int, Droplet>) -> Unit by scene02.userProperties
 
+        var shouldUpdate = 0
         val scene03 = viewBox(drawer.bounds).apply { scene03() }
         val updateThird: (droplets: MutableMap<Int, Droplet>) -> Unit by scene03.userProperties
 
-        val anim = Animator()
+        val sceneChanger = SceneChanger()
 
         var switch = false
 
-
         extend {
-            anim.updateAnimation()
+            sceneChanger.updateAnimation()
+
             dry.update()
             treat(dry.result)
             video.update()
-            plate.update(video.result)
+            if(shouldUpdate == 0) {
+                plate.update(video.result)
+            }
 
-            //println(plate.droplets.size)
 
             drawer.isolated {
-                when(anim.current) {
+                when(sceneChanger.current) {
                     0 -> {
                         updateFirst(video.result, plate.droplets)
                         scene01.draw()
@@ -69,7 +71,8 @@ fun main() = application {
                         scene02.draw()
 
                         val unlabeled = plate.droplets.filter { it.value.imageLoaded && it.value.label == "" }
-                        if(unlabeled.isNotEmpty() && switch == false) {
+                        // remove the switch?
+                        if(unlabeled.isNotEmpty() && !switch) {
                             launch {
                                 val filePaths = unlabeled.map {
                                     println("getting label for ${it.value.file}")
@@ -87,7 +90,10 @@ fun main() = application {
                         }
                     }
                     2 -> {
-                        updateThird(plate.droplets)
+                        if(shouldUpdate == 0) {
+                            updateThird(plate.droplets)
+                            shouldUpdate++
+                        }
                         scene03.draw()
                     }
                 }
@@ -98,8 +104,8 @@ fun main() = application {
             if(debug) {
                 drawer.fill = ColorRGBa.WHITE
                 drawer.stroke = null
-                drawer.rectangle(0.0, 0.0, width * anim.sceneTimer, 10.0)
-                drawer.text(anim.current.toString(), 5.0, 20.0)
+                drawer.rectangle(0.0, 0.0, width * sceneChanger.sceneTimer, 10.0)
+                drawer.text(sceneChanger.current.toString(), 5.0, 20.0)
 
                 dry.update()
                 val w = dry.result.bounds.width / 4.0

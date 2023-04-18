@@ -9,6 +9,9 @@ import org.openrndr.draw.loadImage
 import org.openrndr.draw.shadeStyle
 import org.openrndr.extra.color.presets.ORANGE
 import org.openrndr.extra.color.spaces.ColorOKHSVa
+import org.openrndr.extra.compositor.compose
+import org.openrndr.extra.compositor.draw
+import org.openrndr.extra.compositor.layer
 import org.openrndr.extra.noise.uniform
 import org.openrndr.extra.noise.uniformRing
 import org.openrndr.math.Vector2
@@ -66,7 +69,8 @@ class Droplet {
 
     val c = ColorRGBa.RED
 
-    fun draw(drawer: Drawer, scene: Int = 0) {
+    fun update() {
+
         timeAlive = System.currentTimeMillis() - start
 
         if(timeAlive > 4000L && !imageLoaded) {
@@ -75,8 +79,15 @@ class Droplet {
             //getLabel()
             imageLoaded = true
         }
+    }
 
-        if(timeAlive > 5000L && points.isNotEmpty()) {
+    val frame = bounds
+
+
+    fun draw(drawer: Drawer, scene: Int = 0) {
+        update()
+
+        if(timeAlive > 2000L && points.isNotEmpty()) {
            // checkStatic()
 
 
@@ -92,10 +103,11 @@ class Droplet {
             }
 
 
+
             drawer.stroke = null
             drawer.fill = ColorRGBa.WHITE
 
-            drawer.shadeStyle = shadeStyle {
+          /*  drawer.shadeStyle = shadeStyle {
                 fragmentTransform = """
                         vec2 texCoord = c_boundsPosition.xy;
                         texCoord.y = 1.0 - texCoord.y;
@@ -106,7 +118,7 @@ class Droplet {
                     """
                 parameter("image", cb)
             }
-
+*/
             drawer.shape(contour.shape)
             drawer.shadeStyle = null
 

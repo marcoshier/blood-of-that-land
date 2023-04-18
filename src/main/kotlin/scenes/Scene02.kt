@@ -12,6 +12,7 @@ import org.openrndr.Program
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.isolated
+import org.openrndr.draw.loadFont
 import org.openrndr.draw.writer
 import org.openrndr.extra.camera.Camera2D
 import org.openrndr.extra.imageFit.imageFit
@@ -20,6 +21,8 @@ import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.launch
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Polar
+import org.openrndr.math.mod
+import org.openrndr.math.transforms.transform
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.ShapeContour
 import textgen.address
@@ -47,39 +50,49 @@ fun Program.scene02() {
 
     val rightView = viewBox(right) {
 
+        val fm = loadFont("data/fonts/default.otf", 8.0, contentScale = 4.0)
+
         val c = Camera2D()
         extend(c)
         extend {
-            drawer.fill = ColorRGBa.BLACK
-            drawer.stroke = ColorRGBa.GREEN
-            for (d in droplets.values) {
+            drawer.fontMap = fm
+
+            val t = mod(seconds * 0.5, 1.0)
+
+            c.view = transform {
+                translate(drawer.bounds.center)
+                scale(3.0)
+                translate(-anim.oldCenter.mix(anim.currentCenter, anim.moveAmt))
+            }
+
+            for ((index, d) in droplets.values.filter { it.imageLoaded && it.label != "" }.withIndex()) {
+                drawer.fill = ColorRGBa.BLACK
+                drawer.stroke = ColorRGBa.GREEN
                 drawer.contour(d.contour)
 
                 val p0 = d.bounds.center
                 val p1 = Polar(
-                    Double.uniform(0.0, 360.0, Random(0)),
-                    d.bounds.width * 1.5).cartesian + p0
+                    Double.uniform(0.0, 360.0, Random(index)),
+                    d.bounds.width * 1.8).cartesian + p0
 
                 drawer.lineSegment(p0, p1)
-                val r = Rectangle.fromCenter(p1, 280.0, 80.0)
+                val r = Rectangle.fromCenter(p1, 80.0, 11.0)
                 drawer.stroke = null
                 drawer.fill = ColorRGBa.GREEN
                 drawer.rectangle(r)
 
+                val n = (t).toInt()
                 drawer.fill = ColorRGBa.BLACK
-                drawer.writer {
-                    box = r
-                    newLine()
-                    text(d.label)
-                }
+                drawer.text(d.label)
             }
         }
     }
 
     extend {
-        //anim.updateAnimation()
+        anim.updateAnimation()
+        val d = droplets.values
 
-        anim.rects = droplets.values.filter { it.isTracked  }.map { it.bounds }
+        anim.rects = d.filter { it.imageLoaded }.map { it.bounds }
 
         drawer.isolated {
             drawer.translate((-width / 4.0), 0.0)
@@ -88,10 +101,8 @@ fun Program.scene02() {
             drawer.stroke = ColorRGBa.BLUE
             drawer.strokeWeight = 1.0
 
-            val d = droplets.filter { it.value.bounds.center in left.offsetEdges(100.0) }
-
-
-            d.values.forEach {
+            println(d.size)
+            d.forEach {
                 it.draw(drawer, 1)
             }
         }

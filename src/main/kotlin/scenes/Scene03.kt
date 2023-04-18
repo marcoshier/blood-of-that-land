@@ -6,9 +6,16 @@ import blob_tracker.loadVideoSource
 import org.openrndr.Program
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
+import org.openrndr.draw.ColorBuffer
 import org.openrndr.draw.isolated
+import org.openrndr.draw.loadImage
+import org.openrndr.draw.writer
+import org.openrndr.extra.shapes.grid
 import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.math.IntVector2
+import org.openrndr.math.Matrix44
+import org.openrndr.math.Vector2
+import org.openrndr.math.transforms.transform
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.ShapeContour
 import tools.computeContours
@@ -16,49 +23,79 @@ import tools.computeContours
 fun Program.scene03() {
 
     var droplets = mutableMapOf<Int, Droplet>()
+    var contours = listOf<ShapeContour>()
 
     val left = Rectangle(0.0, 0.0, width / 2.0, height * 1.0)
     val right = Rectangle(width / 2.0, 0.0, width / 2.0, height * 1.0)
 
-    var update02: (droplets: MutableMap<Int, Droplet>)->Unit by this.userProperties
-    update02 = { dpls ->
+    val zoomedAnim = ZoomedAnimation(drawer.bounds)
+    val connectAnim = ConnectAnimation(Rectangle(width / 4.0, 0.0, height * 1.0, height * 1.0))
+
+    var updateThird: (droplets: MutableMap<Int, Droplet>)->Unit by this.userProperties
+    updateThird = { dpls ->
         droplets = dpls
+        contours = droplets.map { it.value.contour }
+        val initialPositions = contours.map { it.bounds.center }
+        connectAnim.apply {
+            oldPositions = initialPositions
+            currentPositions = initialPositions
+            firstTime = false
+            switch(2000L)
+        }
     }
 
-    val anim = ZoomedAnimation(drawer.bounds)
+    val rightView = viewBox(right) {
 
+        val grid = drawer.bounds.grid(5, 7).flatten()
 
-    extend {
-        anim.updateAnimation()
-        val contours = droplets.contours
+        extend {
+            droplets.forEach { it.value.update() }
 
-        anim.rects = droplets.values.filter { it.isTracked  }.map { it.bounds }
+            for((i, droplet) in droplets.filter { it.value.imageLoaded }) {
+                val image = droplet.cb
+                val r = grid[i]
+                val imageRect = r.sub(0.0, 0.0, 1.0, 0.8)
+                val textRect = r.sub(0.0, 0.8, 1.0, 0.2)
+                drawer.image(image,
+                    image.bounds,
+                    imageRect
+                )
+                drawer.fill = ColorRGBa.WHITE
+                drawer.writer {
+                    box= textRect
+                    newLine()
+                    text(droplet.label)
+                }
+            }
 
-        drawer.isolated {
-            drawer.drawStyle.clip = left
-            drawer.stroke = ColorRGBa.RED
-
-            drawer.contour(ShapeContour.fromPoints(contours.map { it.bounds.center }, false))
-
-            drawer.fill = ColorRGBa.BLACK
-            drawer.contours(contours)
         }
 
-        drawer.translate(width / 2.0, 0.0)
-        /*drawer.isolated {
-            drawer.drawStyle.clip = right
-            val scale = 3.0
-            val w = right.width / scale
-            val h = right.height / scale
-            drawer.translate(
-                anim.currentCenter!!.x.coerceIn(0.0, width - w),
-                anim.currentCenter!!.y.coerceIn(0.0, height - h)
-            )
-            drawer.scale(scale)
-            drawer.translate(-width / 2.0, -height / 2.0)
-            drawer.fill = ColorRGBa.RED
-            drawer.contours(contours.map { it.close() })
-        }*/
+    }
+
+    extend {
+        zoomedAnim.updateAnimation()
+        connectAnim.updateAnimation()
+
+
+        if(connectAnim.currentPositions.isNotEmpty()) {
+            drawer.isolated {
+                drawer.translate(-width / 4.0, 0.0)
+                drawer.drawStyle.clip = left
+                drawer.stroke = ColorRGBa.RED
+
+                drawer.contour(connectAnim.connector.sub(0.0, connectAnim.connectorTimer))
+
+                drawer.fill = ColorRGBa.BLACK
+                contours.forEachIndexed { i, it ->
+                    drawer.pushTransforms()
+                    drawer.contour(it)
+                    drawer.popTransforms()
+                }
+            }
+        }
+
+        rightView.draw()
+
 
     }
 
