@@ -13,6 +13,7 @@ import org.openrndr.extra.compositor.*
 import org.openrndr.extra.fx.blend.Add
 import org.openrndr.extra.fx.blend.DestinationAtop
 import org.openrndr.extra.fx.blend.Normal
+import org.openrndr.extra.fx.blur.FrameBlur
 import org.openrndr.extra.fx.color.LumaMap
 import org.openrndr.extra.imageFit.imageFit
 import org.openrndr.extra.noise.uniform
@@ -81,11 +82,11 @@ fun Program.scene01() {
 
                 drawer.fill = ColorRGBa.WHITE
                 drawer.stroke = null
-                drawer.rectangle(30.0, 30.0, 290.0 * sceneAnimations.titleTimer, 28.0)
+                drawer.rectangle(30.0, 30.0, 330.0 * sceneAnimations.titleTimer, 28.0)
 
                 drawer.fontMap = fm
                 drawer.fill = ColorRGBa.BLACK
-                val title = "1 • THE ALL-SEEING ORACLE"
+                val title = "1/3 • THE ALL-SEEING ORACLE"
                 drawer.text(title.take((title.length * sceneAnimations.titleTimer).toInt()), 40.0, 50.0)
 
                 drawer.fill = ColorRGBa.WHITE
@@ -133,14 +134,14 @@ fun Program.scene01() {
                                     it.value.draw(drawer)
                                 }
                             }
-                        }
-                        layer {
-                            blend(Normal()) {
-                                clip = true
-                            }
-                            draw {
-                                drawer.defaults()
-                                drawer.imageFit(it.value.cb, drawer.bounds)
+                            layer {
+                                blend(Normal()) {
+                                    clip = true
+                                }
+                                draw {
+                                    drawer.defaults()
+                                    drawer.imageFit(it.value.cb, drawer.bounds)
+                                }
                             }
                         }
 
@@ -172,6 +173,9 @@ fun Program.scene01() {
         zoomAnimation.updateAnimation()
 
         leftView.draw(drawer)
+        drawer.stroke = null
+        drawer.fill = ColorRGBa.BLACK
+        drawer.rectangle(right)
 
         if(!compositions.isLoaded && droplets.any { it.value.imageLoaded }) {
             compositions.isLoaded = true

@@ -4,6 +4,11 @@ import blob_tracker.Droplet
 import blob_tracker.Plate
 import blob_tracker.loadVideoSource
 import com.google.gson.Gson
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.core.*
+import kotlinx.coroutines.Dispatchers
+import org.openrndr.Fullscreen
 import org.openrndr.Program
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
@@ -17,15 +22,32 @@ import org.openrndr.extra.viewbox.viewBox
 import org.openrndr.launch
 import org.openrndr.shape.Rectangle
 import tools.ColorMoreThan
+import java.io.ByteArrayOutputStream
+import java.io.ObjectOutputStream
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 
 val range = 10.0..250.0
-val fromWebcam = false
+val fromWebcam = true
 val debug = false
+
 
 fun main() = application {
     configure {
-        width = 1280
-        height = 720
+        if(debug) {
+            width = 1280
+            height = 720
+        } else
+        {
+            width = 1280
+            height = 720
+            fullscreen = Fullscreen.SET_DISPLAY_MODE
+            windowAlwaysOnTop = true
+            hideCursor=true
+            hideWindowDecorations=true
+
+        }
     }
     program {
 
@@ -41,11 +63,47 @@ fun main() = application {
         val scene02 = viewBox(drawer.bounds).apply { scene02() }
         val updateSecond: (droplets: MutableMap<Int, Droplet>) -> Unit by scene02.userProperties
 
+
+
+
+
+
+
+
+
+
+
+
         var shouldUpdate = 0
         val scene03 = viewBox(drawer.bounds).apply { scene03() }
         val updateThird: (droplets: MutableMap<Int, Droplet>) -> Unit by scene03.userProperties
 
+
+        val socket = DatagramSocket()
+        val address = java.net.InetSocketAddress(InetAddress.getByName("192.168.42.2"), 9002)
+
+        fun send(state:String) {
+            val baos = ByteArrayOutputStream(1024)
+            val oos = ObjectOutputStream(baos)
+            oos.writeUnshared(state)
+            val data = baos.toByteArray()
+            val p = DatagramPacket(data, data.size, address)
+            socket.send(p)
+        }
+
         val sceneChanger = SceneChanger()
+        sceneChanger.prepareVideo.listen {
+            println("sending video paths")
+            launch {
+                val filePaths = plate.droplets.filter { it.value.imageLoaded }.map { it.value.file + "|" + it.value.label}
+                send(filePaths.joinToString(","))
+            }
+        }
+        sceneChanger.startVideo.listen {
+            launch {
+                send("START")
+            }
+        }
 
         var switch = false
 
@@ -69,25 +127,6 @@ fun main() = application {
                     1 -> {
                         updateSecond(plate.droplets)
                         scene02.draw()
-
-                        val unlabeled = plate.droplets.filter { it.value.imageLoaded && it.value.label == "" }
-                        // remove the switch?
-                        if(unlabeled.isNotEmpty() && !switch) {
-                            launch {
-                                val filePaths = unlabeled.map {
-                                    println("getting label for ${it.value.file}")
-                                    it.key to it.value.file
-                                }
-                                val ls = plate.server.getLabels(filePaths.map { it.second })
-                                val array = Gson().fromJson(ls, Array<String>::class.java)
-
-                                filePaths.forEach {
-                                    plate.droplets[it.first]?.label = array[it.first]
-                                }
-
-                            }
-                            switch =true
-                        }
                     }
                     2 -> {
                         if(shouldUpdate == 0) {
@@ -99,6 +138,26 @@ fun main() = application {
                 }
             }
 
+            if(sceneChanger.current == 1 || sceneChanger.current == 2) {
+                val unlabeled = plate.droplets.filter { it.value.imageLoaded && it.value.label == "" }
+                // remove the switch?
+                if(unlabeled.isNotEmpty() && !switch) {
+                    launch {
+                        val filePaths = unlabeled.map {
+                            println("getting label for ${it.value.file}")
+                            it.key to it.value.file
+                        }
+                        val ls = plate.server.getLabels(filePaths.map { it.second })
+                        val array = Gson().fromJson(ls, Array<String>::class.java)
+
+                        filePaths.take(11).forEach {
+                            plate.droplets[it.first]?.label = array[it.first]
+                        }
+
+                    }
+                    switch =true
+                }
+            }
 
 
             if(debug) {
@@ -132,7 +191,7 @@ fun Program.wet() {
             foreground = rgb(0.0921, 0.6333, 0.0)
         }
         val colorcorr = ColorCorrection().apply {
-            brightness = 0.18
+            brightness = 0.354
             contrast = 1.0
             saturation = 1.0
             hueShift = -112.91

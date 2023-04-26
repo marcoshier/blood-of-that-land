@@ -142,6 +142,7 @@ fun loadDefaultVideo(): VideoPlayerFFMPEG {
 
 fun loadWebcam(): VideoPlayerFFMPEG {
     val devices = VideoPlayerFFMPEG.listDeviceNames()
+    println(devices)
     return loadVideoDevice(devices[0], PlayMode.VIDEO).apply {
         play()
     }

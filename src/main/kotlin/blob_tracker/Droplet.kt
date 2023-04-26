@@ -96,29 +96,23 @@ class Droplet {
 
                 }
                 1 -> {
-                    drawer.stroke = ColorRGBa.RED
-                    drawer.fill = null
-                    drawer.rectangle(bounds)
+                    drawer.fill = ColorRGBa.WHITE
+
+                     drawer.shadeStyle = shadeStyle {
+                          fragmentTransform = """
+                                  vec2 texCoord = c_boundsPosition.xy;
+                                  texCoord.y = 1.0 - texCoord.y;
+                                  vec2 size = textureSize(p_image, 0);
+                                  texCoord.x /= size.x/size.y;
+                                  texCoord.x += 0.18;
+                                  x_fill = texture(p_image, texCoord);
+                              """
+                          parameter("image", cb)
+                      }
+
                 }
             }
 
-
-
-            drawer.stroke = null
-            drawer.fill = ColorRGBa.WHITE
-
-          /*  drawer.shadeStyle = shadeStyle {
-                fragmentTransform = """
-                        vec2 texCoord = c_boundsPosition.xy;
-                        texCoord.y = 1.0 - texCoord.y;
-                        vec2 size = textureSize(p_image, 0);
-                        texCoord.x /= size.x/size.y;
-                        texCoord.x += 0.18;
-                        x_fill = texture(p_image, texCoord);
-                    """
-                parameter("image", cb)
-            }
-*/
             drawer.shape(contour.shape)
             drawer.shadeStyle = null
 

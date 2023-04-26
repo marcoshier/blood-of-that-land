@@ -102,6 +102,7 @@ repositories {
 
 dependencies {
 
+    implementation("io.ktor:ktor-network:2.2.4")
 //    implementation(libs.jsoup)
     implementation(libs.gson)
     implementation(libs.csv)
